@@ -132,28 +132,31 @@
   padding: 0;
 }
 
+/* Contenitore principale: occupa tutta la larghezza disponibile
+   nell'HTML widget di Elementor e centra la card */
 #tanchis-quiz {
   font-family: var(--qt-font);
   font-size: var(--qt-font-size-base);
   color: var(--qt-text);
   background: var(--qt-bg-page);
-  padding: 16px;
-  min-height: 520px;
+  width: 100%;
+  padding: 32px 16px 48px;
   display: flex;
   flex-direction: column;
   align-items: center;
+  gap: 0;
   position: relative;
 }
 
 /* ── Progress bar ────────────────────────────────────────────── */
 #qt-progress-wrap {
   width: 100%;
-  max-width: 620px;
-  height: 6px;
+  max-width: 560px;
+  height: 5px;
   background: var(--qt-border);
   border-radius: 99px;
   overflow: hidden;
-  margin-bottom: 12px;
+  margin-bottom: 10px;
   opacity: 0;
   transition: opacity 0.3s;
 }
@@ -175,17 +178,17 @@
   align-self: flex-start;
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 5px;
   background: none;
   border: none;
   color: var(--qt-text-muted);
   font-size: 14px;
   font-family: var(--qt-font);
   cursor: pointer;
-  padding: 6px 4px;
-  margin-bottom: 8px;
+  padding: 4px 2px;
+  margin-bottom: 6px;
   border-radius: var(--qt-radius-sm);
-  max-width: 620px;
+  max-width: 560px;
   width: 100%;
   transition: color 0.2s;
 }
@@ -200,49 +203,55 @@
 /* ── Slide wrapper ───────────────────────────────────────────── */
 .qt-slide {
   width: 100%;
-  max-width: 620px;
+  max-width: 560px;
   background: var(--qt-bg);
   border-radius: var(--qt-radius);
-  box-shadow: 0 4px 24px rgba(0,0,0,0.08);
-  padding: 40px 36px 36px;
-  animation: qt-fade-in 0.35s ease both;
+  box-shadow: 0 2px 20px rgba(0,0,0,0.07), 0 1px 4px rgba(0,0,0,0.04);
+  /* padding: top | lato | bottom — generoso ma non eccessivo */
+  padding: 40px 40px 36px;
+  animation: qt-fade-in 0.32s ease both;
 }
 
 @keyframes qt-fade-in {
-  from { opacity: 0; transform: translateY(16px); }
+  from { opacity: 0; transform: translateY(12px); }
   to   { opacity: 1; transform: translateY(0); }
 }
 
 .qt-slide[hidden] { display: none; }
 
+/* Gap tra elementi interni della slide */
 .qt-slide-inner {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 0; /* gestiamo i margini singolarmente per controllo fine */
 }
 
 /* ── Welcome screen ──────────────────────────────────────────── */
 .qt-welcome-icon, .qt-thanks-icon {
-  font-size: 48px;
+  font-size: 44px;
   line-height: 1;
+  margin-bottom: 20px;
 }
 
 .qt-headline {
-  font-size: clamp(22px, 4vw, 28px);
+  font-size: clamp(20px, 3.5vw, 26px);
   font-weight: 700;
   line-height: 1.25;
   color: var(--qt-text);
+  margin-bottom: 12px;
 }
 
 .qt-subline {
-  font-size: 16px;
-  line-height: 1.6;
+  font-size: 15px;
+  line-height: 1.65;
   color: var(--qt-text-muted);
+  margin-bottom: 10px;
 }
 
 .qt-meta {
   font-size: 13px;
   color: var(--qt-text-muted);
+  margin-bottom: 28px;
 }
 
 /* ── Bottone primario ────────────────────────────────────────── */
@@ -255,19 +264,20 @@
   color: #fff;
   border: none;
   border-radius: var(--qt-radius-sm);
-  padding: 14px 28px;
-  font-size: 16px;
+  padding: 13px 26px;
+  font-size: 15px;
   font-weight: 600;
   font-family: var(--qt-font);
   cursor: pointer;
   align-self: flex-start;
   transition: background 0.2s, transform 0.1s, box-shadow 0.2s;
-  box-shadow: 0 2px 8px rgba(26,110,189,0.25);
+  box-shadow: 0 2px 8px rgba(26,110,189,0.22);
+  margin-top: 4px;
 }
 
 .qt-btn-primary:hover {
   background: var(--qt-primary-dark);
-  box-shadow: 0 4px 16px rgba(26,110,189,0.35);
+  box-shadow: 0 4px 14px rgba(26,110,189,0.32);
 }
 
 .qt-btn-primary:active { transform: scale(0.97); }
@@ -286,38 +296,40 @@
 
 /* ── Numerazione step ────────────────────────────────────────── */
 .qt-step-label {
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: 0.08em;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.09em;
   text-transform: uppercase;
   color: var(--qt-primary);
+  margin-bottom: 10px;
 }
 
 /* ── Domanda testuale ────────────────────────────────────────── */
 .qt-question-text {
-  font-size: clamp(18px, 3.5vw, 22px);
+  font-size: clamp(17px, 3vw, 21px);
   font-weight: 700;
   line-height: 1.35;
   color: var(--qt-text);
+  margin-bottom: 20px;
 }
 
 /* ── Opzioni scelta singola ──────────────────────────────────── */
 .qt-options {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
   list-style: none;
 }
 
 .qt-option {
   display: flex;
   align-items: center;
-  gap: 14px;
-  padding: 14px 18px;
-  border: 2px solid var(--qt-border);
+  gap: 12px;
+  padding: 12px 16px;
+  border: 1.5px solid var(--qt-border);
   border-radius: var(--qt-radius-sm);
   cursor: pointer;
-  transition: border-color 0.18s, background 0.18s, transform 0.1s;
+  transition: border-color 0.15s, background 0.15s, transform 0.1s;
   user-select: none;
   background: var(--qt-bg);
 }
@@ -341,16 +353,15 @@
 
 /* Radio circle visuale */
 .qt-radio-circle {
-  width: 20px;
-  height: 20px;
-  min-width: 20px;
+  width: 18px;
+  height: 18px;
+  min-width: 18px;
   border: 2px solid var(--qt-border);
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: border-color 0.18s, background 0.18s;
-  aria-hidden: true;
+  transition: border-color 0.15s, background 0.15s;
 }
 
 .qt-option.qt-selected .qt-radio-circle {
@@ -359,8 +370,8 @@
 }
 
 .qt-radio-dot {
-  width: 8px;
-  height: 8px;
+  width: 7px;
+  height: 7px;
   border-radius: 50%;
   background: #fff;
   opacity: 0;
@@ -374,21 +385,23 @@
 }
 
 .qt-option-label {
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 500;
   color: var(--qt-text);
   flex: 1;
+  line-height: 1.4;
 }
 
 /* ── Campi testo ─────────────────────────────────────────────── */
 .qt-field-wrap {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
+  margin-bottom: 16px;
 }
 
 .qt-field-wrap label {
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 600;
   color: var(--qt-text-muted);
 }
@@ -397,8 +410,8 @@
 .qt-field-wrap input[type="email"],
 .qt-field-wrap input[type="tel"] {
   width: 100%;
-  padding: 13px 16px;
-  border: 2px solid var(--qt-border);
+  padding: 12px 14px;
+  border: 1.5px solid var(--qt-border);
   border-radius: var(--qt-radius-sm);
   font-size: 16px;
   font-family: var(--qt-font);
@@ -411,18 +424,18 @@
 
 .qt-field-wrap input:focus {
   border-color: var(--qt-primary);
-  box-shadow: 0 0 0 3px rgba(26,110,189,0.12);
+  box-shadow: 0 0 0 3px rgba(26,110,189,0.10);
 }
 
 .qt-field-wrap input.qt-invalid {
   border-color: var(--qt-error);
-  box-shadow: 0 0 0 3px rgba(220,38,38,0.1);
+  box-shadow: 0 0 0 3px rgba(220,38,38,0.08);
 }
 
 .qt-field-error {
-  font-size: 13px;
+  font-size: 12px;
   color: var(--qt-error);
-  min-height: 18px;
+  min-height: 16px;
 }
 
 /* ── Checkbox privacy ────────────────────────────────────────── */
@@ -430,7 +443,7 @@
   display: flex;
   align-items: flex-start;
   gap: 12px;
-  padding: 16px;
+  padding: 14px 16px;
   border: 2px solid var(--qt-border);
   border-radius: var(--qt-radius-sm);
   cursor: pointer;
@@ -469,6 +482,11 @@
   text-align: center;
 }
 
+/* thank-you: resetta i margini bottom pensati per la welcome */
+.qt-thanks-inner .qt-thanks-icon { margin-bottom: 16px; }
+.qt-thanks-inner .qt-headline    { margin-bottom: 10px; }
+.qt-thanks-inner .qt-subline     { margin-bottom: 8px; }
+
 /* ── Loading spinner sul bottone ─────────────────────────────── */
 .qt-btn-primary.qt-loading {
   pointer-events: none;
@@ -476,8 +494,8 @@
 }
 
 .qt-spinner {
-  width: 18px;
-  height: 18px;
+  width: 17px;
+  height: 17px;
   border: 2.5px solid rgba(255,255,255,0.4);
   border-top-color: #fff;
   border-radius: 50%;
@@ -493,10 +511,13 @@
 }
 
 /* ── Responsive ──────────────────────────────────────────────── */
-@media (max-width: 480px) {
-  #tanchis-quiz { padding: 10px; }
-  .qt-slide { padding: 28px 20px 24px; border-radius: 10px; }
-  .qt-option { padding: 12px 14px; }
+@media (max-width: 540px) {
+  #tanchis-quiz    { padding: 20px 10px 36px; }
+  .qt-slide        { padding: 28px 20px 24px; border-radius: 10px; }
+  .qt-option       { padding: 11px 13px; }
+  .qt-welcome-icon { font-size: 36px; margin-bottom: 14px; }
+  .qt-headline     { margin-bottom: 10px; }
+  .qt-meta         { margin-bottom: 22px; }
 }
 </style>
 
