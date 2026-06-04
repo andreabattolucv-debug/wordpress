@@ -1,0 +1,1047 @@
+<!--
+  ============================================================
+  STUDIO TANCHIS — Conversational Quiz Form (Ortodonzia)
+  ============================================================
+
+  CONFIGURAZIONE RAPIDA:
+  1. WEBHOOK_URL  → riga ~30: sostituisci 'YOUR_WEBHOOK_URL_HERE' con l'endpoint
+                    che riceverà i dati (es. Make/Zapier/n8n webhook)
+  2. PRIVACY_URL  → riga ~35: sostituisci 'YOUR_PRIVACY_URL_HERE' con il link
+                    alla privacy policy dello studio
+  3. BRANDING CSS → riga ~45: modifica le variabili --qt-* per colori e font:
+                    --qt-primary      colore principale (blu/viola brand)
+                    --qt-primary-dark hover del colore principale
+                    --qt-accent       colore accent (es. oro/verde)
+                    --qt-text         colore testo principale
+                    --qt-bg           sfondo del quiz
+                    --qt-font         font-family
+
+  ISTRUZIONI ELEMENTOR:
+  - Copia tutto il contenuto di questo file
+  - In Elementor, aggiungi widget "HTML"
+  - Incolla il contenuto nel campo HTML del widget
+  - Salva e pubblica
+  ============================================================
+-->
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quiz Ortodonzia – Studio Tanchis</title>
+</head>
+<body>
+
+<!-- ============================================================
+     MARKUP DEL QUIZ
+     Il contenitore #tanchis-quiz scopa tutto il CSS/JS
+     ============================================================ -->
+<div id="tanchis-quiz" role="main" aria-label="Quiz ortodonzia Studio Tanchis">
+
+  <!-- Progress bar -->
+  <div id="qt-progress-wrap" aria-hidden="true">
+    <div id="qt-progress-bar" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+  </div>
+
+  <!-- Bottone Indietro -->
+  <button id="qt-back-btn" type="button" aria-label="Torna alla domanda precedente" hidden>
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="15 18 9 12 15 6"/></svg>
+    Indietro
+  </button>
+
+  <!-- ── WELCOME SCREEN ── -->
+  <div class="qt-slide" id="qt-slide-welcome" data-slide="welcome" role="region" aria-label="Benvenuto">
+    <div class="qt-slide-inner">
+      <div class="qt-welcome-icon" aria-hidden="true">🦷</div>
+      <h1 class="qt-headline">Scopri il sorriso che meriti</h1>
+      <p class="qt-subline">
+        Rispondi a <strong>5 domande veloci</strong> e ricevi una consulenza personalizzata
+        dal team di <strong>Studio Tanchis</strong> sul trattamento ortodontico più adatto a te.
+      </p>
+      <p class="qt-meta">⏱ Meno di 2 minuti &nbsp;·&nbsp; 🔒 I tuoi dati sono al sicuro</p>
+      <button class="qt-btn-primary" id="qt-start-btn" type="button">
+        Inizia il quiz
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="9 18 15 12 9 6"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- ── SLIDES DOMANDE (generate via JS) ── -->
+  <div id="qt-questions-wrap"></div>
+
+  <!-- ── THANK YOU SCREEN ── -->
+  <div class="qt-slide" id="qt-slide-thanks" data-slide="thanks" role="region" aria-label="Grazie per la compilazione" hidden>
+    <div class="qt-slide-inner qt-thanks-inner">
+      <div class="qt-thanks-icon" aria-hidden="true">✅</div>
+      <h2 class="qt-headline">Grazie, <span id="qt-thanks-name"></span>!</h2>
+      <p class="qt-subline">
+        Abbiamo ricevuto le tue risposte. Un membro del nostro team ti contatterà
+        presto per fissare la tua <strong>consulenza ortodontica gratuita</strong>.
+      </p>
+      <p class="qt-meta">Controlla anche la tua casella email 📬</p>
+    </div>
+  </div>
+
+  <!-- ── ERROR SCREEN ── -->
+  <div class="qt-slide" id="qt-slide-error" data-slide="error" role="region" aria-label="Errore di invio" hidden>
+    <div class="qt-slide-inner">
+      <div class="qt-thanks-icon" aria-hidden="true">⚠️</div>
+      <h2 class="qt-headline">Qualcosa è andato storto</h2>
+      <p class="qt-subline">
+        Non siamo riusciti a inviare le tue risposte. Controlla la connessione e riprova.
+      </p>
+      <button class="qt-btn-primary" id="qt-retry-btn" type="button">Riprova</button>
+    </div>
+  </div>
+
+</div><!-- /#tanchis-quiz -->
+
+
+<!-- ============================================================
+     STILI — tutto scopato sotto #tanchis-quiz
+     ============================================================ -->
+<style>
+/* ── Variabili brand ─────────────────────────────────────────
+   Modifica questi valori per adattare il quiz al tuo brand.   */
+#tanchis-quiz {
+  /* COLORI PRINCIPALI */
+  --qt-primary:      #1A6EBD;   /* colore principale bottoni/barre */
+  --qt-primary-dark: #155a9e;   /* hover del colore principale */
+  --qt-accent:       #2EC4B6;   /* colore accent (progress bar, checkmark) */
+  --qt-text:         #1c1c1e;   /* testo principale */
+  --qt-text-muted:   #6e6e73;   /* testo secondario */
+  --qt-bg:           #ffffff;   /* sfondo card quiz */
+  --qt-bg-page:      #f0f4f8;   /* sfondo pagina (se visibile) */
+  --qt-border:       #d1d5db;   /* bordi input e opzioni */
+  --qt-option-hover: #eef4fb;   /* hover sulle opzioni */
+  --qt-option-sel:   #dbeafe;   /* background opzione selezionata */
+  --qt-option-sel-border: #1A6EBD;
+  --qt-error:        #dc2626;   /* colore messaggi errore */
+  --qt-radius:       14px;      /* bordo arrotondato card */
+  --qt-radius-sm:    8px;       /* bordo arrotondato elementi interni */
+
+  /* TIPOGRAFIA */
+  --qt-font: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  --qt-font-size-base: 16px;
+}
+
+/* ── Reset & base ────────────────────────────────────────────── */
+#tanchis-quiz *, #tanchis-quiz *::before, #tanchis-quiz *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+#tanchis-quiz {
+  font-family: var(--qt-font);
+  font-size: var(--qt-font-size-base);
+  color: var(--qt-text);
+  background: var(--qt-bg-page);
+  padding: 16px;
+  min-height: 520px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+}
+
+/* ── Progress bar ────────────────────────────────────────────── */
+#qt-progress-wrap {
+  width: 100%;
+  max-width: 620px;
+  height: 6px;
+  background: var(--qt-border);
+  border-radius: 99px;
+  overflow: hidden;
+  margin-bottom: 12px;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+#qt-progress-wrap.qt-visible {
+  opacity: 1;
+}
+
+#qt-progress-bar {
+  height: 100%;
+  background: linear-gradient(90deg, var(--qt-primary), var(--qt-accent));
+  border-radius: 99px;
+  width: 0%;
+  transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ── Bottone Indietro ────────────────────────────────────────── */
+#qt-back-btn {
+  align-self: flex-start;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: none;
+  color: var(--qt-text-muted);
+  font-size: 14px;
+  font-family: var(--qt-font);
+  cursor: pointer;
+  padding: 6px 4px;
+  margin-bottom: 8px;
+  border-radius: var(--qt-radius-sm);
+  max-width: 620px;
+  width: 100%;
+  transition: color 0.2s;
+}
+
+#qt-back-btn:hover { color: var(--qt-text); }
+
+#qt-back-btn:focus-visible {
+  outline: 2px solid var(--qt-primary);
+  outline-offset: 2px;
+}
+
+/* ── Slide wrapper ───────────────────────────────────────────── */
+.qt-slide {
+  width: 100%;
+  max-width: 620px;
+  background: var(--qt-bg);
+  border-radius: var(--qt-radius);
+  box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+  padding: 40px 36px 36px;
+  animation: qt-fade-in 0.35s ease both;
+}
+
+@keyframes qt-fade-in {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.qt-slide[hidden] { display: none; }
+
+.qt-slide-inner {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* ── Welcome screen ──────────────────────────────────────────── */
+.qt-welcome-icon, .qt-thanks-icon {
+  font-size: 48px;
+  line-height: 1;
+}
+
+.qt-headline {
+  font-size: clamp(22px, 4vw, 28px);
+  font-weight: 700;
+  line-height: 1.25;
+  color: var(--qt-text);
+}
+
+.qt-subline {
+  font-size: 16px;
+  line-height: 1.6;
+  color: var(--qt-text-muted);
+}
+
+.qt-meta {
+  font-size: 13px;
+  color: var(--qt-text-muted);
+}
+
+/* ── Bottone primario ────────────────────────────────────────── */
+.qt-btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: var(--qt-primary);
+  color: #fff;
+  border: none;
+  border-radius: var(--qt-radius-sm);
+  padding: 14px 28px;
+  font-size: 16px;
+  font-weight: 600;
+  font-family: var(--qt-font);
+  cursor: pointer;
+  align-self: flex-start;
+  transition: background 0.2s, transform 0.1s, box-shadow 0.2s;
+  box-shadow: 0 2px 8px rgba(26,110,189,0.25);
+}
+
+.qt-btn-primary:hover {
+  background: var(--qt-primary-dark);
+  box-shadow: 0 4px 16px rgba(26,110,189,0.35);
+}
+
+.qt-btn-primary:active { transform: scale(0.97); }
+
+.qt-btn-primary:focus-visible {
+  outline: 3px solid var(--qt-accent);
+  outline-offset: 3px;
+}
+
+.qt-btn-primary:disabled {
+  background: var(--qt-border);
+  color: var(--qt-text-muted);
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+/* ── Numerazione step ────────────────────────────────────────── */
+.qt-step-label {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--qt-primary);
+}
+
+/* ── Domanda testuale ────────────────────────────────────────── */
+.qt-question-text {
+  font-size: clamp(18px, 3.5vw, 22px);
+  font-weight: 700;
+  line-height: 1.35;
+  color: var(--qt-text);
+}
+
+/* ── Opzioni scelta singola ──────────────────────────────────── */
+.qt-options {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  list-style: none;
+}
+
+.qt-option {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 18px;
+  border: 2px solid var(--qt-border);
+  border-radius: var(--qt-radius-sm);
+  cursor: pointer;
+  transition: border-color 0.18s, background 0.18s, transform 0.1s;
+  user-select: none;
+  background: var(--qt-bg);
+}
+
+.qt-option:hover {
+  border-color: var(--qt-primary);
+  background: var(--qt-option-hover);
+}
+
+.qt-option:active { transform: scale(0.99); }
+
+.qt-option.qt-selected {
+  border-color: var(--qt-option-sel-border);
+  background: var(--qt-option-sel);
+}
+
+.qt-option:focus-visible {
+  outline: 3px solid var(--qt-accent);
+  outline-offset: 2px;
+}
+
+/* Radio circle visuale */
+.qt-radio-circle {
+  width: 20px;
+  height: 20px;
+  min-width: 20px;
+  border: 2px solid var(--qt-border);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: border-color 0.18s, background 0.18s;
+  aria-hidden: true;
+}
+
+.qt-option.qt-selected .qt-radio-circle {
+  border-color: var(--qt-primary);
+  background: var(--qt-primary);
+}
+
+.qt-radio-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #fff;
+  opacity: 0;
+  transform: scale(0);
+  transition: opacity 0.15s, transform 0.15s;
+}
+
+.qt-option.qt-selected .qt-radio-dot {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.qt-option-label {
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--qt-text);
+  flex: 1;
+}
+
+/* ── Campi testo ─────────────────────────────────────────────── */
+.qt-field-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.qt-field-wrap label {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--qt-text-muted);
+}
+
+.qt-field-wrap input[type="text"],
+.qt-field-wrap input[type="email"],
+.qt-field-wrap input[type="tel"] {
+  width: 100%;
+  padding: 13px 16px;
+  border: 2px solid var(--qt-border);
+  border-radius: var(--qt-radius-sm);
+  font-size: 16px;
+  font-family: var(--qt-font);
+  color: var(--qt-text);
+  background: var(--qt-bg);
+  transition: border-color 0.2s, box-shadow 0.2s;
+  outline: none;
+  -webkit-appearance: none;
+}
+
+.qt-field-wrap input:focus {
+  border-color: var(--qt-primary);
+  box-shadow: 0 0 0 3px rgba(26,110,189,0.12);
+}
+
+.qt-field-wrap input.qt-invalid {
+  border-color: var(--qt-error);
+  box-shadow: 0 0 0 3px rgba(220,38,38,0.1);
+}
+
+.qt-field-error {
+  font-size: 13px;
+  color: var(--qt-error);
+  min-height: 18px;
+}
+
+/* ── Checkbox privacy ────────────────────────────────────────── */
+.qt-privacy-wrap {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 16px;
+  border: 2px solid var(--qt-border);
+  border-radius: var(--qt-radius-sm);
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s;
+}
+
+.qt-privacy-wrap:has(input:checked) {
+  border-color: var(--qt-primary);
+  background: var(--qt-option-sel);
+}
+
+.qt-privacy-wrap input[type="checkbox"] {
+  width: 20px;
+  height: 20px;
+  min-width: 20px;
+  cursor: pointer;
+  accent-color: var(--qt-primary);
+  margin-top: 1px;
+}
+
+.qt-privacy-wrap label {
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--qt-text-muted);
+  cursor: pointer;
+}
+
+.qt-privacy-wrap label a {
+  color: var(--qt-primary);
+  text-decoration: underline;
+}
+
+/* ── Thank you ───────────────────────────────────────────────── */
+.qt-thanks-inner {
+  align-items: center;
+  text-align: center;
+}
+
+/* ── Loading spinner sul bottone ─────────────────────────────── */
+.qt-btn-primary.qt-loading {
+  pointer-events: none;
+  opacity: 0.8;
+}
+
+.qt-spinner {
+  width: 18px;
+  height: 18px;
+  border: 2.5px solid rgba(255,255,255,0.4);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: qt-spin 0.7s linear infinite;
+  display: none;
+}
+
+.qt-btn-primary.qt-loading .qt-spinner { display: block; }
+.qt-btn-primary.qt-loading .qt-btn-text { display: none; }
+
+@keyframes qt-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ── Responsive ──────────────────────────────────────────────── */
+@media (max-width: 480px) {
+  #tanchis-quiz { padding: 10px; }
+  .qt-slide { padding: 28px 20px 24px; border-radius: 10px; }
+  .qt-option { padding: 12px 14px; }
+}
+</style>
+
+
+<!-- ============================================================
+     JAVASCRIPT
+     ============================================================ -->
+<script>
+(function() {
+  'use strict';
+
+  /* ── ① CONFIGURAZIONE — modifica qui testi e opzioni ───────── */
+
+  // Endpoint che riceverà i dati del lead (JSON POST)
+  const WEBHOOK_URL = 'YOUR_WEBHOOK_URL_HERE';
+
+  // URL della privacy policy dello studio
+  const PRIVACY_URL = 'YOUR_PRIVACY_URL_HERE';
+
+  // Array delle domande del quiz
+  // Ogni oggetto può avere:
+  //   id       {string}  identificatore univoco (usato nel payload e nel tracking)
+  //   type     {string}  'choice' | 'text' | 'email' | 'tel' | 'privacy'
+  //   question {string}  testo della domanda visualizzato all'utente
+  //   label    {string}  label per i campi input (type text/email/tel)
+  //   options  {Array}   array di stringhe per type 'choice'
+  const QUESTIONS = [
+    {
+      id: 'esigenza',
+      type: 'choice',
+      question: 'Qual è la tua esigenza principale in ambito ortodontico?',
+      options: [
+        'Raddrizzare i denti (denti storti o affollati)',
+        'Correggere il morso (aperto, profondo o inverso)',
+        'Migliorare l\'estetica del sorriso',
+        'Controllo o consulenza per un figlio/a',
+        'Non lo so ancora, voglio una valutazione',
+      ]
+    },
+    {
+      id: 'apparecchio',
+      type: 'choice',
+      question: 'Hai già avuto un apparecchio ortodontico in passato?',
+      options: [
+        'No, è la prima volta',
+        'Sì, da bambino/adolescente',
+        'Sì, ho già fatto un trattamento da adulto',
+        'Ho fatto una terapia ma non l\'ho completata',
+      ]
+    },
+    {
+      id: 'trattamento_preferito',
+      type: 'choice',
+      question: 'Quale tipo di trattamento ti incuriosisce di più?',
+      options: [
+        'Allineatori trasparenti (quasi invisibili)',
+        'Apparecchio fisso tradizionale',
+        'Non ho preferenze, decido col dottore',
+        'Voglio conoscere tutte le opzioni disponibili',
+      ]
+    },
+    {
+      id: 'urgenza',
+      type: 'choice',
+      question: 'Hai un\'urgenza o un disagio in corso?',
+      options: [
+        'Sì, ho dolore o fastidio',
+        'No, ma voglio iniziare presto',
+        'Sto ancora valutando, non ho fretta',
+        'Voglio solo un\'opinione prima di decidere',
+      ]
+    },
+    {
+      id: 'ultima_visita',
+      type: 'choice',
+      question: 'Quando hai effettuato l\'ultima visita odontoiatrica?',
+      options: [
+        'Meno di 6 mesi fa',
+        'Tra 6 mesi e 1 anno fa',
+        'Più di 1 anno fa',
+        'Non ricordo / mai',
+      ]
+    },
+    {
+      id: 'nome',
+      type: 'text',
+      question: 'Come ti chiami?',
+      label: 'Il tuo nome',
+      placeholder: 'Es. Marco Rossi',
+    },
+    {
+      id: 'telefono',
+      type: 'tel',
+      question: 'A quale numero possiamo chiamarti?',
+      label: 'Numero di telefono',
+      placeholder: 'Es. 333 123 4567',
+    },
+    {
+      id: 'email',
+      type: 'email',
+      question: 'Qual è il tuo indirizzo email?',
+      label: 'Indirizzo email',
+      placeholder: 'Es. marco@email.it',
+    },
+    {
+      id: 'privacy',
+      type: 'privacy',
+      question: 'Ultimo passo: consenso al trattamento dei dati',
+    },
+  ];
+
+  /* ── ② STATO INTERNO ──────────────────────────────────────── */
+  const state = {
+    step: -1,          // -1 = welcome, 0..N-1 = domande, N = invio
+    answers: {},       // { [questionId]: valore }
+    started: false,
+  };
+
+  /* ── ③ HELPERS TRACKING ───────────────────────────────────── */
+  // Push sicuro: non lancia errori se dataLayer non è definito
+  function trackEvent(eventName, params) {
+    try {
+      if (window.dataLayer && Array.isArray(window.dataLayer)) {
+        window.dataLayer.push(Object.assign({ event: eventName }, params || {}));
+      }
+    } catch (e) {
+      // silenzio
+    }
+  }
+
+  /* ── ④ GENERAZIONE SLIDE DOMANDE ─────────────────────────── */
+  function buildSlides() {
+    const wrap = document.getElementById('qt-questions-wrap');
+    wrap.innerHTML = '';
+
+    QUESTIONS.forEach(function(q, index) {
+      const slide = document.createElement('div');
+      slide.className = 'qt-slide';
+      slide.id = 'qt-slide-' + q.id;
+      slide.setAttribute('data-slide', q.id);
+      slide.setAttribute('role', 'region');
+      slide.setAttribute('aria-label', 'Domanda ' + (index + 1));
+      slide.hidden = true;
+
+      const stepLabel = document.createElement('div');
+      stepLabel.className = 'qt-step-label';
+      stepLabel.setAttribute('aria-hidden', 'true');
+      stepLabel.textContent = (index + 1) + ' di ' + QUESTIONS.length;
+
+      const questionText = document.createElement('h2');
+      questionText.className = 'qt-question-text';
+      questionText.id = 'qt-q-label-' + q.id;
+      questionText.textContent = q.question;
+
+      const inner = document.createElement('div');
+      inner.className = 'qt-slide-inner';
+      inner.appendChild(stepLabel);
+      inner.appendChild(questionText);
+
+      // ── Opzioni scelta singola
+      if (q.type === 'choice') {
+        const ul = document.createElement('ul');
+        ul.className = 'qt-options';
+        ul.setAttribute('role', 'radiogroup');
+        ul.setAttribute('aria-labelledby', 'qt-q-label-' + q.id);
+
+        q.options.forEach(function(optText, optIdx) {
+          const li = document.createElement('li');
+          li.className = 'qt-option';
+          li.setAttribute('role', 'radio');
+          li.setAttribute('aria-checked', 'false');
+          li.setAttribute('tabindex', '0');
+          li.dataset.value = optText;
+          li.dataset.qid = q.id;
+
+          const circle = document.createElement('span');
+          circle.className = 'qt-radio-circle';
+          circle.setAttribute('aria-hidden', 'true');
+          const dot = document.createElement('span');
+          dot.className = 'qt-radio-dot';
+          circle.appendChild(dot);
+
+          const label = document.createElement('span');
+          label.className = 'qt-option-label';
+          label.textContent = optText;
+
+          li.appendChild(circle);
+          li.appendChild(label);
+          ul.appendChild(li);
+
+          // Click e tastiera
+          li.addEventListener('click', function() { selectOption(this); });
+          li.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              selectOption(this);
+            }
+          });
+        });
+
+        inner.appendChild(ul);
+      }
+
+      // ── Campo testo / email / tel
+      if (['text','email','tel'].indexOf(q.type) !== -1) {
+        const fieldWrap = document.createElement('div');
+        fieldWrap.className = 'qt-field-wrap';
+
+        const labelEl = document.createElement('label');
+        labelEl.setAttribute('for', 'qt-input-' + q.id);
+        labelEl.textContent = q.label || q.question;
+
+        const input = document.createElement('input');
+        input.type = q.type === 'text' ? 'text' : q.type;
+        input.id = 'qt-input-' + q.id;
+        input.name = q.id;
+        input.placeholder = q.placeholder || '';
+        input.autocomplete = q.type === 'email' ? 'email' : q.type === 'tel' ? 'tel' : 'name';
+        input.setAttribute('aria-describedby', 'qt-err-' + q.id);
+
+        const errorSpan = document.createElement('span');
+        errorSpan.className = 'qt-field-error';
+        errorSpan.id = 'qt-err-' + q.id;
+        errorSpan.setAttribute('role', 'alert');
+        errorSpan.setAttribute('aria-live', 'polite');
+
+        // Avanza con Invio
+        input.addEventListener('keydown', function(e) {
+          if (e.key === 'Enter') { e.preventDefault(); advanceFromTextField(q); }
+        });
+
+        // Ripristina classe errore alla digitazione
+        input.addEventListener('input', function() {
+          this.classList.remove('qt-invalid');
+          errorSpan.textContent = '';
+        });
+
+        fieldWrap.appendChild(labelEl);
+        fieldWrap.appendChild(input);
+        fieldWrap.appendChild(errorSpan);
+        inner.appendChild(fieldWrap);
+
+        // Bottone Avanti
+        const nextBtn = document.createElement('button');
+        nextBtn.className = 'qt-btn-primary qt-next-btn';
+        nextBtn.type = 'button';
+        nextBtn.dataset.qid = q.id;
+        nextBtn.innerHTML = '<span class="qt-btn-text">Avanti <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="9 18 15 12 9 6"/></svg></span>';
+        nextBtn.addEventListener('click', function() { advanceFromTextField(q); });
+        inner.appendChild(nextBtn);
+      }
+
+      // ── Privacy + submit
+      if (q.type === 'privacy') {
+        const privacyWrap = document.createElement('div');
+        privacyWrap.className = 'qt-privacy-wrap';
+
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.id = 'qt-privacy-check';
+        checkbox.name = 'privacy';
+        checkbox.required = true;
+
+        const privLabel = document.createElement('label');
+        privLabel.setAttribute('for', 'qt-privacy-check');
+        privLabel.innerHTML =
+          'Ho letto e accetto l\'<a href="' + PRIVACY_URL + '" target="_blank" rel="noopener">informativa sulla privacy</a> '
+          + 'e acconsento al trattamento dei miei dati personali per ricevere informazioni sui trattamenti ortodontici.';
+
+        privacyWrap.appendChild(checkbox);
+        privacyWrap.appendChild(privLabel);
+        inner.appendChild(privacyWrap);
+
+        const errorSpan = document.createElement('span');
+        errorSpan.className = 'qt-field-error';
+        errorSpan.id = 'qt-err-privacy';
+        errorSpan.setAttribute('role', 'alert');
+        errorSpan.setAttribute('aria-live', 'polite');
+        inner.appendChild(errorSpan);
+
+        // Bottone invio
+        const submitBtn = document.createElement('button');
+        submitBtn.className = 'qt-btn-primary';
+        submitBtn.type = 'button';
+        submitBtn.id = 'qt-submit-btn';
+        submitBtn.innerHTML =
+          '<span class="qt-btn-text">Invia e scopri le opzioni 🚀</span>'
+          + '<span class="qt-spinner" aria-hidden="true"></span>';
+        submitBtn.addEventListener('click', handleSubmit);
+        inner.appendChild(submitBtn);
+      }
+
+      slide.appendChild(inner);
+      wrap.appendChild(slide);
+    });
+  }
+
+  /* ── ⑤ NAVIGAZIONE ────────────────────────────────────────── */
+
+  function showSlide(id) {
+    // Nasconde tutti gli slide
+    document.querySelectorAll('#tanchis-quiz .qt-slide').forEach(function(s) {
+      s.hidden = true;
+    });
+
+    const target = document.getElementById('qt-slide-' + id);
+    if (!target) return;
+    target.hidden = false;
+
+    // Focus sul primo elemento interattivo dopo l'animazione
+    setTimeout(function() {
+      const focusable = target.querySelector(
+        'button:not([disabled]), input, [tabindex="0"]'
+      );
+      if (focusable) focusable.focus({ preventScroll: true });
+    }, 360);
+  }
+
+  function updateProgressBar() {
+    const progressWrap = document.getElementById('qt-progress-wrap');
+    const progressBar  = document.getElementById('qt-progress-bar');
+
+    if (state.step < 0) {
+      progressWrap.classList.remove('qt-visible');
+      return;
+    }
+
+    progressWrap.classList.add('qt-visible');
+    const pct = Math.round(((state.step + 1) / QUESTIONS.length) * 100);
+    progressBar.style.width = pct + '%';
+    progressBar.setAttribute('aria-valuenow', pct);
+  }
+
+  function updateBackButton() {
+    const btn = document.getElementById('qt-back-btn');
+    btn.hidden = state.step <= 0;
+  }
+
+  function goToStep(index) {
+    state.step = index;
+    updateProgressBar();
+    updateBackButton();
+
+    if (index < 0) {
+      showSlide('welcome');
+    } else if (index < QUESTIONS.length) {
+      showSlide(QUESTIONS[index].id);
+      // Tracking avanzamento step
+      trackEvent('quiz_step', {
+        step_number: index + 1,
+        question_id: QUESTIONS[index].id
+      });
+    }
+  }
+
+  function goNext() {
+    const nextStep = state.step + 1;
+    if (nextStep < QUESTIONS.length) {
+      goToStep(nextStep);
+    }
+  }
+
+  function goBack() {
+    if (state.step > 0) {
+      goToStep(state.step - 1);
+    } else if (state.step === 0) {
+      state.step = -1;
+      updateProgressBar();
+      updateBackButton();
+      showSlide('welcome');
+    }
+  }
+
+  /* ── ⑥ SELEZIONE OPZIONI ─────────────────────────────────── */
+  function selectOption(optionEl) {
+    const qid  = optionEl.dataset.qid;
+    const val  = optionEl.dataset.value;
+
+    // Deseleziona le altre opzioni dello stesso gruppo
+    const parent = optionEl.closest('.qt-options');
+    if (parent) {
+      parent.querySelectorAll('.qt-option').forEach(function(o) {
+        o.classList.remove('qt-selected');
+        o.setAttribute('aria-checked', 'false');
+      });
+    }
+
+    // Seleziona questa
+    optionEl.classList.add('qt-selected');
+    optionEl.setAttribute('aria-checked', 'true');
+
+    // Salva risposta
+    state.answers[qid] = val;
+
+    // Avanza automaticamente dopo un piccolo delay
+    setTimeout(function() { goNext(); }, 300);
+  }
+
+  /* ── ⑦ VALIDAZIONE CAMPI TESTO ────────────────────────────── */
+  function validateField(q) {
+    const input    = document.getElementById('qt-input-' + q.id);
+    const errorEl  = document.getElementById('qt-err-' + q.id);
+    const val      = input ? input.value.trim() : '';
+
+    if (!val) {
+      if (input) input.classList.add('qt-invalid');
+      if (errorEl) errorEl.textContent = 'Questo campo è obbligatorio.';
+      return false;
+    }
+
+    if (q.type === 'email') {
+      const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+      if (!emailRe.test(val)) {
+        input.classList.add('qt-invalid');
+        if (errorEl) errorEl.textContent = 'Inserisci un indirizzo email valido.';
+        return false;
+      }
+    }
+
+    if (q.type === 'tel') {
+      const telRe = /^[\d\s\+\-\(\)]{6,15}$/;
+      if (!telRe.test(val)) {
+        input.classList.add('qt-invalid');
+        if (errorEl) errorEl.textContent = 'Inserisci un numero di telefono valido.';
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+  function advanceFromTextField(q) {
+    if (!validateField(q)) return;
+    const input = document.getElementById('qt-input-' + q.id);
+    state.answers[q.id] = input.value.trim();
+    goNext();
+  }
+
+  /* ── ⑧ SUBMIT ─────────────────────────────────────────────── */
+  function handleSubmit() {
+    // Controlla checkbox privacy
+    const checkbox = document.getElementById('qt-privacy-check');
+    const errorEl  = document.getElementById('qt-err-privacy');
+
+    if (!checkbox.checked) {
+      if (errorEl) {
+        errorEl.textContent = 'Devi accettare la privacy policy per continuare.';
+      }
+      checkbox.focus();
+      return;
+    }
+    if (errorEl) errorEl.textContent = '';
+
+    state.answers.privacy = true;
+
+    const submitBtn = document.getElementById('qt-submit-btn');
+    submitBtn.classList.add('qt-loading');
+    submitBtn.disabled = true;
+
+    // Payload completo
+    const payload = {
+      source:    'quiz_ortodonzia_tanchis',
+      timestamp: new Date().toISOString(),
+      contact: {
+        nome:     state.answers.nome     || '',
+        telefono: state.answers.telefono || '',
+        email:    state.answers.email    || '',
+      },
+      quiz: {
+        esigenza:             state.answers.esigenza             || '',
+        apparecchio:          state.answers.apparecchio          || '',
+        trattamento_preferito: state.answers.trattamento_preferito || '',
+        urgenza:              state.answers.urgenza              || '',
+        ultima_visita:        state.answers.ultima_visita        || '',
+      },
+      privacy_accepted: true,
+    };
+
+    fetch(WEBHOOK_URL, {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify(payload),
+    })
+    .then(function(res) {
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      return res;
+    })
+    .then(function() {
+      // Tracking lead generato
+      trackEvent('generate_lead', {
+        category:    'ortodonzia',
+        esigenza:    payload.quiz.esigenza,
+        lead_source: 'quiz_tanchis',
+      });
+
+      // Mostra thank you
+      const nameEl = document.getElementById('qt-thanks-name');
+      if (nameEl) nameEl.textContent = (state.answers.nome || '').split(' ')[0] || '';
+
+      document.getElementById('qt-progress-wrap').classList.remove('qt-visible');
+      document.getElementById('qt-back-btn').hidden = true;
+      showSlide('thanks');
+    })
+    .catch(function(err) {
+      console.error('[TanchisQuiz] Submit error:', err);
+      submitBtn.classList.remove('qt-loading');
+      submitBtn.disabled = false;
+      showSlide('error');
+      document.getElementById('qt-back-btn').hidden = true;
+    });
+  }
+
+  /* ── ⑨ INIZIALIZZAZIONE ───────────────────────────────────── */
+  function init() {
+    buildSlides();
+    showSlide('welcome');
+
+    // Start
+    document.getElementById('qt-start-btn').addEventListener('click', function() {
+      state.started = true;
+      trackEvent('quiz_start', { category: 'ortodonzia' });
+      goToStep(0);
+    });
+
+    // Indietro
+    document.getElementById('qt-back-btn').addEventListener('click', function() {
+      goBack();
+    });
+
+    // Retry dopo errore
+    document.getElementById('qt-retry-btn').addEventListener('click', function() {
+      showSlide(QUESTIONS[QUESTIONS.length - 1].id);
+      document.getElementById('qt-back-btn').hidden = false;
+    });
+  }
+
+  // Avvia quando il DOM è pronto
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+
+})();
+</script>
+
+</body>
+</html>
